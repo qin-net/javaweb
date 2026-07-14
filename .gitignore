@@ -1,0 +1,17 @@
+# Maven 编译输出
+target/
+
+# IDE 配置文件
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
