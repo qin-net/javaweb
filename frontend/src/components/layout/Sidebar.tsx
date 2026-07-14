@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Users, UserCheck,
-  UserPlus, BookOpen, Send
+  UserPlus, BookOpen, Send, ClipboardCheck
 } from 'lucide-react';
 
 function cn(...classes: (string | boolean | undefined)[]) {
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/', icon: LayoutDashboard, label: '工作台' },
   { to: '/papers', icon: FileText, label: '稿件管理' },
   { to: '/papers/submit', icon: Send, label: '在线投稿' },
+  { to: '/review-management', icon: ClipboardCheck, label: '审稿管理' },
   { to: '/authors', icon: Users, label: '作者管理' },
   { to: '/reviewers', icon: UserCheck, label: '审稿人管理' },
   { to: '/assignments', icon: UserPlus, label: '审稿指派' },

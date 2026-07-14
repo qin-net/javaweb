@@ -1,7 +1,9 @@
 package com.journal.web;
 
 import com.journal.exception.BusinessException;
+import com.journal.model.ReviewRecord;
 import com.journal.model.Reviewer;
+import com.journal.service.ReviewService;
 import com.journal.service.ReviewerService;
 import com.journal.util.JsonUtil;
 
@@ -19,8 +21,9 @@ import java.util.List;
  *
  * 功能详述：
  *   对接 /api/reviewers/* 路径，提供审稿人的查询接口。
- *   GET /api/reviewers           → 获取审稿人列表（支持 keyword 关键词搜索）
- *   GET /api/reviewers/{id}      → 获取审稿人详情
+ *   GET /api/reviewers                 → 获取审稿人列表（支持 keyword 关键词搜索）
+ *   GET /api/reviewers/{id}            → 获取审稿人详情
+ *   GET /api/reviewers/{id}/reviews    → 获取审稿人的审稿记录
  *
  * 依赖：
  *   com.journal.service.ReviewerService
@@ -32,6 +35,9 @@ public class ReviewerServlet extends BaseServlet {
 
     /** 审稿人业务服务 */
     private final ReviewerService reviewerService = new ReviewerService();
+
+    /** 审稿业务服务（用于查询审稿人的审稿记录） */
+    private final ReviewService reviewService = new ReviewService();
 
     /**
      * 处理 GET 请求。
@@ -50,8 +56,8 @@ public class ReviewerServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String pathId = getPathId(req);
+            String subResource = getSubResource(req);
             if (pathId == null) {
-                // 审稿人列表查询
                 String keyword = getParam(req, "keyword");
                 List<Reviewer> reviewers;
                 if (keyword != null) {
@@ -60,8 +66,11 @@ public class ReviewerServlet extends BaseServlet {
                     reviewers = reviewerService.getAll();
                 }
                 writeJson(resp, JsonUtil.writeSuccess(reviewers));
+            } else if ("reviews".equals(subResource)) {
+                int reviewerId = Integer.parseInt(pathId);
+                List<ReviewRecord> reviews = reviewService.getByReviewerId(reviewerId);
+                writeJson(resp, JsonUtil.writeSuccess(reviews));
             } else {
-                // 审稿人详情查询
                 int id = Integer.parseInt(pathId);
                 Reviewer reviewer = reviewerService.getById(id);
                 if (reviewer == null) {

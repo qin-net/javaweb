@@ -100,6 +100,29 @@ public abstract class BaseServlet extends HttpServlet {
     }
 
     /**
+     * 从 URI 路径中提取子资源名称。
+     * 例如 /api/papers/123/reviews 返回 "reviews"，/api/papers/123 返回 null。
+     *
+     * 编写者：张鸿昊
+     * 完成时间：2026-07-14
+     *
+     * @param req HttpServletRequest 对象
+     * @return 子资源名称字符串，无子资源时返回 null
+     */
+    protected String getSubResource(HttpServletRequest req) {
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || pathInfo.isEmpty()) {
+            return null;
+        }
+        String path = pathInfo.substring(1);
+        int slashIndex = path.indexOf('/');
+        if (slashIndex > 0 && slashIndex < path.length() - 1) {
+            return path.substring(slashIndex + 1);
+        }
+        return null;
+    }
+
+    /**
      * 安全获取整数类型的请求参数。
      * 如果参数不存在或无法解析为整数，则返回默认值。
      *
@@ -174,7 +197,19 @@ public abstract class BaseServlet extends HttpServlet {
      */
     protected int getJsonInt(com.google.gson.JsonObject json, String key, int defaultValue) {
         if (json.has(key) && !json.get(key).isJsonNull()) {
-            return json.get(key).getAsInt();
+            com.google.gson.JsonElement elem = json.get(key);
+            if (elem.isJsonPrimitive()) {
+                com.google.gson.JsonPrimitive prim = elem.getAsJsonPrimitive();
+                if (prim.isNumber()) {
+                    return prim.getAsInt();
+                } else if (prim.isString()) {
+                    try {
+                        return Integer.parseInt(prim.getAsString().trim());
+                    } catch (NumberFormatException e) {
+                        return defaultValue;
+                    }
+                }
+            }
         }
         return defaultValue;
     }

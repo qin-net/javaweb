@@ -7,7 +7,9 @@ import com.google.gson.reflect.TypeToken;
 import com.journal.exception.BusinessException;
 import com.journal.model.Manuscript;
 import com.journal.model.Reference;
+import com.journal.model.ReviewRecord;
 import com.journal.service.ManuscriptService;
+import com.journal.service.ReviewService;
 import com.journal.util.JsonUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,10 +45,14 @@ public class PaperServlet extends BaseServlet {
     /** 稿件业务服务 */
     private final ManuscriptService manuscriptService = new ManuscriptService();
 
+    /** 审稿业务服务（用于查询稿件关联的审稿记录） */
+    private final ReviewService reviewService = new ReviewService();
+
     /**
      * 处理 GET 请求。
-     * GET /api/papers        → 论文列表分页查询（支持 keyword, journalName, status, authorId, page, pageSize 参数）
-     * GET /api/papers/{id}   → 获取论文详情
+     * GET /api/papers                → 论文列表分页查询（支持 keyword, journalName, status, authorId, page, pageSize 参数）
+     * GET /api/papers/{id}           → 获取论文详情
+     * GET /api/papers/{id}/reviews   → 获取论文关联的审稿记录
      *
      * 编写者：张鸿昊
      * 完成时间：2026-07-14
@@ -59,11 +65,12 @@ public class PaperServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String pathId = getPathId(req);
+            String subResource = getSubResource(req);
             if (pathId == null) {
-                // 论文列表分页查询
                 handleList(req, resp);
+            } else if ("reviews".equals(subResource)) {
+                handlePaperReviews(pathId, resp);
             } else {
-                // 论文详情查询
                 handleDetail(pathId, resp);
             }
         } catch (BusinessException e) {
@@ -71,6 +78,23 @@ public class PaperServlet extends BaseServlet {
         } catch (Exception e) {
             writeJson(resp, JsonUtil.writeError(500, "服务器内部错误：" + e.getMessage()));
         }
+    }
+
+    /**
+     * 处理获取论文关联的审稿记录。
+     * GET /api/papers/{id}/reviews → 返回该论文的所有审稿记录列表。
+     *
+     * 编写者：张鸿昊
+     * 完成时间：2026-07-14
+     *
+     * @param pathId 路径中的论文 ID 字符串
+     * @param resp   HttpServletResponse 对象
+     * @throws IOException 如果 I/O 操作发生异常
+     */
+    private void handlePaperReviews(String pathId, HttpServletResponse resp) throws IOException {
+        int paperId = Integer.parseInt(pathId);
+        List<ReviewRecord> reviews = reviewService.getByPaperId(paperId);
+        writeJson(resp, JsonUtil.writeSuccess(reviews));
     }
 
     /**
@@ -198,18 +222,46 @@ public class PaperServlet extends BaseServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
-            String pathInfo = req.getPathInfo();
-            if (pathInfo != null && pathInfo.endsWith("/status")) {
-                // 更新论文状态
+            String subResource = getSubResource(req);
+            if ("status".equals(subResource)) {
                 handleUpdateStatus(req, resp);
+            } else if ("accept".equals(subResource)) {
+                handleAccept(req, resp);
             } else {
-                // 更新论文信息
                 handleUpdate(req, resp);
             }
         } catch (BusinessException e) {
             writeJson(resp, JsonUtil.writeError(400, e.getMessage()));
         } catch (Exception e) {
             writeJson(resp, JsonUtil.writeError(500, "服务器内部错误：" + e.getMessage()));
+        }
+    }
+
+    /**
+     * 处理论文收录操作。
+     * PUT /api/papers/{id}/accept → 将论文状态变更为 accepted。
+     * 前端调用时不携带请求体。
+     *
+     * 编写者：张鸿昊
+     * 完成时间：2026-07-14
+     *
+     * @param req  HttpServletRequest 对象
+     * @param resp HttpServletResponse 对象
+     * @throws IOException 如果 I/O 操作发生异常
+     */
+    private void handleAccept(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pathId = getPathId(req);
+        if (pathId == null) {
+            writeJson(resp, JsonUtil.writeError(400, "缺少论文 ID"));
+            return;
+        }
+        int id = Integer.parseInt(pathId);
+        boolean success = manuscriptService.updateStatus(id, "accepted");
+        if (success) {
+            Manuscript updated = manuscriptService.getById(id);
+            writeJson(resp, JsonUtil.writeSuccess(updated));
+        } else {
+            writeJson(resp, JsonUtil.writeError(500, "收录操作失败"));
         }
     }
 

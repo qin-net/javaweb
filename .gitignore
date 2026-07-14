@@ -13,5 +13,8 @@ target/
 .DS_Store
 Thumbs.db
 
+# 前端依赖
+frontend/node_modules/
+
 # 日志文件
 *.log

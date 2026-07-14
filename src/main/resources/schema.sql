@@ -4,6 +4,9 @@
 -- 字符集：utf8mb4
 -- ============================================================
 
+-- 确保客户端连接使用 UTF-8
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS journal_submission_system
     DEFAULT CHARACTER SET utf8mb4
     DEFAULT COLLATE utf8mb4_general_ci;
@@ -27,7 +30,7 @@ CREATE TABLE IF NOT EXISTS author (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS reviewer (
     id          INT AUTO_INCREMENT PRIMARY KEY COMMENT '审稿人ID',
-    name        VARCHAR(50)  NOT NULL COMMENT '姓名',
+    name        VARCHAR(300) NOT NULL COMMENT '姓名',            -- 加长到300，支持长机构名
     email       VARCHAR(100) NOT NULL COMMENT '邮箱',
     institution VARCHAR(100) NOT NULL COMMENT '所属机构',
     department  VARCHAR(100) NOT NULL COMMENT '院系/部门',
@@ -40,7 +43,7 @@ CREATE TABLE IF NOT EXISTS reviewer (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS manuscript (
     id                     INT AUTO_INCREMENT PRIMARY KEY COMMENT '稿件ID',
-    title                  VARCHAR(200) NOT NULL COMMENT '论文题目',
+    title                  VARCHAR(300) NOT NULL COMMENT '论文题目',   -- 加长到300
     abstract_text          TEXT         NOT NULL COMMENT '摘要',
     keywords               VARCHAR(500) NOT NULL COMMENT '关键词(JSON数组)',
     content                TEXT         NOT NULL COMMENT '正文内容',
@@ -82,7 +85,7 @@ CREATE TABLE IF NOT EXISTS reference_lit (
 CREATE TABLE IF NOT EXISTS review_record (
     id            INT AUTO_INCREMENT PRIMARY KEY COMMENT '审稿记录ID',
     paper_id      INT          NOT NULL COMMENT '稿件ID',
-    paper_title   VARCHAR(200) NOT NULL COMMENT '稿件题目',
+    paper_title   VARCHAR(300) NOT NULL COMMENT '稿件题目',        -- 加长到300
     reviewer_id   INT          NOT NULL COMMENT '审稿人ID',
     reviewer_name VARCHAR(50)  NOT NULL COMMENT '审稿人姓名',
     decision      VARCHAR(20)  NOT NULL COMMENT '审稿决定(approved/rejected)',

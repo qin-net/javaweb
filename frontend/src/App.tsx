@@ -13,6 +13,7 @@ const AuthorDetail = lazy(() => import('@/pages/authors/AuthorDetail'))
 const ReviewerList = lazy(() => import('@/pages/reviewers/ReviewerList'))
 const ReviewerDetail = lazy(() => import('@/pages/reviewers/ReviewerDetail'))
 const AssignmentPage = lazy(() => import('@/pages/AssignmentPage'))
+const ReviewManagement = lazy(() => import('@/pages/ReviewManagement'))
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/authors/:id" element={<AuthorDetail />} />
           <Route path="/reviewers" element={<ReviewerList />} />
           <Route path="/reviewers/:id" element={<ReviewerDetail />} />
+          <Route path="/review-management" element={<ReviewManagement />} />
           <Route path="/assignments" element={<AssignmentPage />} />
         </Route>
       </Routes>

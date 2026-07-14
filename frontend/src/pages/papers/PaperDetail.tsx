@@ -375,11 +375,21 @@ export default function PaperDetail() {
 
               {!paper.assignedReviewerId && (
                 <button
-                  onClick={() => toast.info('指派审稿人功能开发中')}
+                  onClick={() => navigate('/assignments', { state: { paperId: id } })}
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-amber-200 bg-amber-50 text-amber-700 text-sm font-medium rounded-lg hover:bg-amber-100 transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
                   指派审稿人
+                </button>
+              )}
+
+              {paper.assignedReviewerId && paper.status === 'reviewing' && (
+                <button
+                  onClick={() => navigate(`/papers/${id}/review`)}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  进入审稿
                 </button>
               )}
             </div>

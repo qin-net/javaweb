@@ -2,7 +2,9 @@ package com.journal.web;
 
 import com.journal.exception.BusinessException;
 import com.journal.model.Author;
+import com.journal.model.Manuscript;
 import com.journal.service.AuthorService;
+import com.journal.service.ManuscriptService;
 import com.journal.util.JsonUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,8 +21,9 @@ import java.util.List;
  *
  * 功能详述：
  *   对接 /api/authors/* 路径，提供作者的查询接口。
- *   GET /api/authors           → 获取作者列表（支持 keyword 关键词搜索）
- *   GET /api/authors/{id}      → 获取作者详情
+ *   GET /api/authors               → 获取作者列表（支持 keyword 关键词搜索）
+ *   GET /api/authors/{id}          → 获取作者详情
+ *   GET /api/authors/{id}/papers   → 获取作者的论文列表
  *
  * 依赖：
  *   com.journal.service.AuthorService
@@ -32,6 +35,9 @@ public class AuthorServlet extends BaseServlet {
 
     /** 作者业务服务 */
     private final AuthorService authorService = new AuthorService();
+
+    /** 稿件业务服务（用于查询作者的论文列表） */
+    private final ManuscriptService manuscriptService = new ManuscriptService();
 
     /**
      * 处理 GET 请求。
@@ -50,8 +56,8 @@ public class AuthorServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String pathId = getPathId(req);
+            String subResource = getSubResource(req);
             if (pathId == null) {
-                // 作者列表查询
                 String keyword = getParam(req, "keyword");
                 List<Author> authors;
                 if (keyword != null) {
@@ -60,8 +66,11 @@ public class AuthorServlet extends BaseServlet {
                     authors = authorService.getAll();
                 }
                 writeJson(resp, JsonUtil.writeSuccess(authors));
+            } else if ("papers".equals(subResource)) {
+                int authorId = Integer.parseInt(pathId);
+                List<Manuscript> papers = manuscriptService.search(null, null, null, String.valueOf(authorId));
+                writeJson(resp, JsonUtil.writeSuccess(papers));
             } else {
-                // 作者详情查询
                 int id = Integer.parseInt(pathId);
                 Author author = authorService.getById(id);
                 if (author == null) {
