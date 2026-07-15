@@ -422,6 +422,42 @@ public class ManuscriptDAO {
     }
 
     /**
+     * 根据审稿人ID查询指派给该审稿人的所有稿件。
+     * 查询条件为 assigned_reviewer_id 等于传入的审稿人ID，
+     * 结果按投稿日期降序排列。用于审稿人只看到指派给自己的稿件。
+     *
+     * 编写者：张鸿昊
+     * 完成时间：2026-07-15
+     *
+     * @param reviewerId 审稿人ID（对应 reviewer 表的 id）
+     * @return 指派给该审稿人的稿件列表
+     */
+    public List<Manuscript> findByReviewerId(int reviewerId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<Manuscript> list = new ArrayList<Manuscript>();
+        try {
+            conn = DBUtil.getConnection();
+            String sql = "SELECT id, title, abstract_text, keywords, content, journal_name, " +
+                    "author_id, author_name, status, submission_date, review_date, " +
+                    "acceptance_date, publication_date, assigned_reviewer_id, assigned_reviewer_name " +
+                    "FROM manuscript WHERE assigned_reviewer_id = ? ORDER BY submission_date DESC";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, reviewerId);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new BusinessException("按审稿人ID查询稿件失败：reviewerId=" + reviewerId, e);
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return list;
+    }
+
+    /**
      * 查询所有已指派审稿人的稿件。
      *
      * 编写者：张鸿昊

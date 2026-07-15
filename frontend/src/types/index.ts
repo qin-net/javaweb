@@ -120,3 +120,26 @@ export interface PaperFilter {
   page?: number;
   pageSize?: number;
 }
+
+// Auth user
+export interface AuthUser {
+  id: number;
+  username: string;
+  realName: string;
+  roleId: number;
+  roleCode: 'admin' | 'reviewer' | 'author';
+  roleName: string;
+  refId: number | null;
+  email: string;
+  dataScope: number;
+}
+
+// Menu item
+export interface MenuItem {
+  id: number;
+  menuName: string;
+  menuCode: string;
+  path: string;
+  icon: string;
+  sortOrder: number;
+}

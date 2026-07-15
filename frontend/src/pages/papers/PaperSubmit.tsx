@@ -9,6 +9,7 @@ import TagInput from '@/components/shared/TagInput';
 import FormField from '@/components/shared/FormField';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 // --- zod schema ---
 const referenceSchema = z.object({
@@ -42,12 +43,9 @@ const JOURNAL_OPTIONS: { label: string; value: JournalName }[] = [
   { label: '生物医学版', value: '生物医学版' },
 ];
 
-// Demo author for mock purposes
-const DEMO_AUTHOR_ID = 'auth-1';
-const DEMO_AUTHOR_NAME = '李明华';
-
 export default function PaperSubmit() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const {
     register,
@@ -65,8 +63,8 @@ export default function PaperSubmit() {
       abstract: '',
       keywords: [],
       content: '',
-      authorId: DEMO_AUTHOR_ID,
-      authorName: DEMO_AUTHOR_NAME,
+      authorId: String(user?.refId ?? ''),
+      authorName: user?.realName ?? '',
       references: [],
     },
   });
@@ -186,12 +184,12 @@ export default function PaperSubmit() {
               </select>
             </FormField>
 
-            {/* author (fixed demo value) */}
-            <FormField label="作者" required hint="演示环境使用默认作者">
+            {/* author (read-only, from login user) */}
+            <FormField label="作者" required hint="当前登录作者，不可修改">
               <input
                 type="text"
                 readOnly
-                value={DEMO_AUTHOR_NAME}
+                value={user?.realName ?? ''}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 cursor-not-allowed"
               />
             </FormField>

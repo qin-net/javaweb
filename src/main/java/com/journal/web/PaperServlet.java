@@ -4,16 +4,19 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.journal.dao.ManuscriptDAO;
 import com.journal.exception.BusinessException;
 import com.journal.model.Manuscript;
 import com.journal.model.Reference;
 import com.journal.model.ReviewRecord;
+import com.journal.model.SysUser;
 import com.journal.service.ManuscriptService;
 import com.journal.service.ReviewService;
 import com.journal.util.JsonUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -44,6 +47,9 @@ public class PaperServlet extends BaseServlet {
 
     /** 稿件业务服务 */
     private final ManuscriptService manuscriptService = new ManuscriptService();
+
+    /** 稿件数据访问对象（用于数据权限过滤查询） */
+    private final ManuscriptDAO manuscriptDAO = new ManuscriptDAO();
 
     /** 审稿业务服务（用于查询稿件关联的审稿记录） */
     private final ReviewService reviewService = new ReviewService();
@@ -109,14 +115,33 @@ public class PaperServlet extends BaseServlet {
      * @throws IOException 如果 I/O 操作发生异常
      */
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String keyword = getParam(req, "keyword");
-        String journalName = getParam(req, "journalName");
-        String status = getParam(req, "status");
-        String authorId = getParam(req, "authorId");
+        // 从 Session 获取当前登录用户，进行数据权限过滤
+        HttpSession session = req.getSession(false);
+        SysUser currentUser = null;
+        if (session != null) {
+            currentUser = (SysUser) session.getAttribute("currentUser");
+        }
+
         int page = getIntParam(req, "page", 1);
         int pageSize = getIntParam(req, "pageSize", 10);
 
-        List<Manuscript> allResults = manuscriptService.search(keyword, journalName, status, authorId);
+        List<Manuscript> allResults;
+
+        if (currentUser != null && "reviewer".equals(currentUser.getRoleCode())) {
+            // 审稿人只看到指派给自己的稿件
+            allResults = manuscriptDAO.findByReviewerId(currentUser.getRefId());
+        } else if (currentUser != null && "author".equals(currentUser.getRoleCode())) {
+            // 作者只看到自己的稿件
+            allResults = manuscriptDAO.findByAuthorId(currentUser.getRefId());
+        } else {
+            // 管理员走原有搜索逻辑
+            String keyword = getParam(req, "keyword");
+            String journalName = getParam(req, "journalName");
+            String status = getParam(req, "status");
+            String authorId = getParam(req, "authorId");
+            allResults = manuscriptService.search(keyword, journalName, status, authorId);
+        }
+
         if (allResults == null) {
             allResults = new ArrayList<>();
         }

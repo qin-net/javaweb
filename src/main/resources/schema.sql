@@ -94,3 +94,73 @@ CREATE TABLE IF NOT EXISTS review_record (
     CONSTRAINT fk_review_paper FOREIGN KEY (paper_id) REFERENCES manuscript(id),
     CONSTRAINT fk_review_reviewer FOREIGN KEY (reviewer_id) REFERENCES reviewer(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审稿记录表';
+
+-- ============================================================
+-- RBAC 权限系统表（共5张）
+-- ============================================================
+
+-- -----------------------------------------------------------
+-- 6. 角色表 (sys_role)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sys_role (
+    id          INT AUTO_INCREMENT PRIMARY KEY COMMENT '角色ID',
+    role_name   VARCHAR(50)  NOT NULL COMMENT '角色名称',
+    role_code   VARCHAR(50)  NOT NULL UNIQUE COMMENT '角色编码(admin/reviewer/author)',
+    data_scope  TINYINT      NOT NULL DEFAULT 1 COMMENT '数据范围:1全部 2仅本人',
+    description VARCHAR(200) NULL COMMENT '角色描述',
+    status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态:1启用 0禁用'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';
+
+-- -----------------------------------------------------------
+-- 7. 系统用户表 (sys_user)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sys_user (
+    id          INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID',
+    username    VARCHAR(50)  NOT NULL UNIQUE COMMENT '登录用户名',
+    password    VARCHAR(128) NOT NULL COMMENT '密码(SHA-256哈希)',
+    real_name   VARCHAR(50)  NOT NULL COMMENT '真实姓名',
+    role_id     INT          NOT NULL COMMENT '角色ID',
+    ref_id      INT          NULL COMMENT '关联业务ID(作者ID或审稿人ID)',
+    email       VARCHAR(100) NULL COMMENT '邮箱',
+    status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态:1启用 0禁用',
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES sys_role(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
+
+-- -----------------------------------------------------------
+-- 8. 用户角色关联表 (sys_user_role)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sys_user_role (
+    id      INT AUTO_INCREMENT PRIMARY KEY COMMENT '关联ID',
+    user_id INT NOT NULL COMMENT '用户ID',
+    role_id INT NOT NULL COMMENT '角色ID',
+    UNIQUE KEY uk_user_role (user_id, role_id),
+    CONSTRAINT fk_ur_user FOREIGN KEY (user_id) REFERENCES sys_user(id),
+    CONSTRAINT fk_ur_role FOREIGN KEY (role_id) REFERENCES sys_role(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
+
+-- -----------------------------------------------------------
+-- 9. 菜单表 (sys_menu)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sys_menu (
+    id          INT AUTO_INCREMENT PRIMARY KEY COMMENT '菜单ID',
+    menu_name   VARCHAR(50)  NOT NULL COMMENT '菜单名称',
+    menu_code   VARCHAR(50)  NOT NULL UNIQUE COMMENT '菜单编码',
+    path        VARCHAR(200) NOT NULL COMMENT '前端路由路径',
+    api_pattern VARCHAR(200) NULL COMMENT '后端API路径模式(用于鉴权)',
+    icon        VARCHAR(50)  NULL COMMENT '图标名称',
+    sort_order  INT          NOT NULL DEFAULT 0 COMMENT '排序号',
+    status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态:1启用 0禁用'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单表';
+
+-- -----------------------------------------------------------
+-- 10. 角色菜单关联表 (sys_role_menu)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sys_role_menu (
+    id      INT AUTO_INCREMENT PRIMARY KEY COMMENT '关联ID',
+    role_id INT NOT NULL COMMENT '角色ID',
+    menu_id INT NOT NULL COMMENT '菜单ID',
+    UNIQUE KEY uk_role_menu (role_id, menu_id),
+    CONSTRAINT fk_rm_role FOREIGN KEY (role_id) REFERENCES sys_role(id),
+    CONSTRAINT fk_rm_menu FOREIGN KEY (menu_id) REFERENCES sys_menu(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单关联表';

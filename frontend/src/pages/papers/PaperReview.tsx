@@ -21,10 +21,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import LoadingSkeleton from '@/components/shared/LoadingSkeleton';
 import { cn, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
-
-// Demo reviewer info
-const DEMO_REVIEWER_ID = 'rev-1';
-const DEMO_REVIEWER_NAME = '张明';
+import { useAuth } from '@/contexts/AuthContext';
 
 function formatDateTime(dateStr: string): string {
   if (!dateStr) return '-';
@@ -43,6 +40,7 @@ type PageState = 'loading' | 'error' | 'ready';
 export default function PaperReview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // --- state ---
   const [paper, setPaper] = useState<Paper | null>(null);
@@ -56,9 +54,12 @@ export default function PaperReview() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // Whether current demo reviewer already reviewed this paper
-  const alreadyReviewed = reviews.some((r) => r.reviewerId === DEMO_REVIEWER_ID);
-  const existingReview = reviews.find((r) => r.reviewerId === DEMO_REVIEWER_ID);
+  // Whether current reviewer already reviewed this paper
+  const currentReviewerId = String(user?.refId ?? '');
+  const alreadyReviewed = reviews.some((r) => r.reviewerId === currentReviewerId);
+  const existingReview = reviews.find((r) => r.reviewerId === currentReviewerId);
+  // Only reviewers can submit review form
+  const canReview = user?.roleCode === 'reviewer';
 
   // --- data fetching ---
   useEffect(() => {
@@ -109,8 +110,8 @@ export default function PaperReview() {
     try {
       const newReview = await createReview({
         paperId: id,
-        reviewerId: DEMO_REVIEWER_ID,
-        reviewerName: DEMO_REVIEWER_NAME,
+        reviewerId: currentReviewerId,
+        reviewerName: user?.realName ?? '',
         decision,
         comments: comments.trim(),
       });
@@ -295,7 +296,8 @@ export default function PaperReview() {
 
         {/* --- right column: review form + history --- */}
         <div className="space-y-6">
-          {/* review form */}
+          {/* review form - only visible to reviewers */}
+          {canReview && (
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <h2 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
               <Send className="w-4 h-4 text-slate-400" />
@@ -446,6 +448,7 @@ export default function PaperReview() {
               </form>
             )}
           </div>
+          )}
 
           {/* review history */}
           <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -471,7 +474,7 @@ export default function PaperReview() {
                     key={review.id}
                     className={cn(
                       'border rounded-lg p-3.5',
-                      review.reviewerId === DEMO_REVIEWER_ID
+                      review.reviewerId === currentReviewerId
                         ? 'border-[#1e3a5f]/20 bg-blue-50/30'
                         : 'border-slate-100 bg-slate-50/50',
                     )}
@@ -481,7 +484,7 @@ export default function PaperReview() {
                         <span className="text-sm font-medium text-slate-700">
                           {review.reviewerName}
                         </span>
-                        {review.reviewerId === DEMO_REVIEWER_ID && (
+                        {review.reviewerId === currentReviewerId && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1e3a5f]/10 text-[#1e3a5f] font-medium">
                             您
                           </span>

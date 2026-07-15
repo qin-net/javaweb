@@ -167,3 +167,83 @@ INSERT INTO review_record (id, paper_id, paper_title, reviewer_id, reviewer_name
 (28, 37, '基于外泌体的肿瘤液体活检技术研究', 3, '徐明达', 'approved', '微流控芯片设计精巧，在不增加设备复杂度的前提下提高了外泌体捕获效率。85%的检出率具有临床潜力。', '2026-06-01'),
 (29, 4, '基于联邦学习的工业设备故障预测方法', 4, '崔海龙', 'approved', '联邦学习应用于工业设备故障预测具有前瞻性。多中心数据验证充分证明了方法的数据隐私保护和协同学习优势。', '2026-01-15'),
 (30, 26, 'ESG信息披露对企业融资约束的影响研究', 5, '董建华', 'approved', '实证设计合理，ESG披露质量指标体系的构建方法规范。结论对政策制定和企业实践具有参考价值。', '2026-04-20');
+
+-- ============================================================
+-- RBAC 权限系统初始化数据
+-- ============================================================
+
+-- -----------------------------------------------------------
+-- 6. 插入角色数据 (3 条)
+-- -----------------------------------------------------------
+INSERT INTO sys_role (id, role_name, role_code, data_scope, description, status) VALUES
+(1, '系统管理员', 'admin',    1, '系统管理员，拥有全部管理功能，可查看所有数据', 1),
+(2, '审稿人',     'reviewer', 2, '审稿人角色，仅能查看和审阅被指派的稿件', 1),
+(3, '作者',       'author',   2, '作者角色，仅能在线投稿和查看自己的稿件', 1);
+
+-- -----------------------------------------------------------
+-- 7. 插入菜单数据 (7 条)
+-- -----------------------------------------------------------
+INSERT INTO sys_menu (id, menu_name, menu_code, path, api_pattern, icon, sort_order, status) VALUES
+(1, '工作台',     'dashboard',         '/',                  '/api/dashboard/*',   'LayoutDashboard', 1, 1),
+(2, '稿件管理',   'paper-management',  '/papers',            '/api/papers/*',      'FileText',        2, 1),
+(3, '在线投稿',   'paper-submit',      '/papers/submit',     '/api/papers',        'Send',            3, 1),
+(4, '审稿管理',   'review-management', '/review-management', '/api/reviews/*',     'ClipboardCheck',  4, 1),
+(5, '作者管理',   'author-management', '/authors',           '/api/authors/*',     'Users',           5, 1),
+(6, '审稿人管理', 'reviewer-management','/reviewers',        '/api/reviewers/*',   'UserCheck',       6, 1),
+(7, '审稿指派',   'assignment',        '/assignments',       '/api/assignments/*', 'UserPlus',        7, 1);
+
+-- -----------------------------------------------------------
+-- 8. 插入角色菜单关联数据
+--    管理员: 工作台 + 稿件管理 + 作者管理 + 审稿人管理 + 审稿指派（无投稿、无审稿）
+--    审稿人: 审稿管理（仅此一项）
+--    作者:   在线投稿 + 稿件管理（查看自己的稿件）
+-- -----------------------------------------------------------
+INSERT INTO sys_role_menu (role_id, menu_id) VALUES
+(1, 1), (1, 2), (1, 5), (1, 6), (1, 7),
+(2, 4),
+(3, 3), (3, 2);
+
+-- -----------------------------------------------------------
+-- 9. 插入系统用户数据
+--    密码统一为 123456 的 SHA-256 哈希值
+--    管理员 1 个 + 审稿人 10 个(对应reviewer表) + 作者 15 个(对应author表)
+-- -----------------------------------------------------------
+INSERT INTO sys_user (id, username, password, real_name, role_id, ref_id, email, status) VALUES
+-- 管理员
+(1,  'admin',     '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '系统管理员', 1, NULL, 'admin@dhs.edu.cn', 1),
+-- 审稿人（username 为 reviewer + reviewer表id，ref_id 对应 reviewer 表 id）
+(2,  'reviewer1',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '马文军', 2, 1,  'mawj@tsinghua.edu.cn', 1),
+(3,  'reviewer2',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '韩志强', 2, 2,  'hanzq@ustb.edu.cn', 1),
+(4,  'reviewer3',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '徐明达', 2, 3,  'xumd@sibs.ac.cn', 1),
+(5,  'reviewer4',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '崔海龙', 2, 4,  'cuihl@sjtu.edu.cn', 1),
+(6,  'reviewer5',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '董建华', 2, 5,  'dongjh@bnu.edu.cn', 1),
+(7,  'reviewer6',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '孟祥宇', 2, 6,  'mengxy@nankai.edu.cn', 1),
+(8,  'reviewer7',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '潘伟',   2, 7,  'panwei@seu.edu.cn', 1),
+(9,  'reviewer8',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '金永哲', 2, 8,  'jinyz@tju.edu.cn', 1),
+(10, 'reviewer9',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '蔡国栋', 2, 9,  'caigd@hust.edu.cn', 1),
+(11, 'reviewer10', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '蒋海峰', 2, 10, 'jianghf@fmmu.edu.cn', 1),
+-- 作者（username 为 author + author表id，ref_id 对应 author 表 id）
+(12, 'author1',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '张明辉', 3, 1,  'zhangmh@dlut.edu.cn', 1),
+(13, 'author2',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '李红霞', 3, 2,  'lihx@neu.edu.cn', 1),
+(14, 'author3',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '王建国', 3, 3,  'wangjg@dlut.edu.cn', 1),
+(15, 'author4',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '陈思远', 3, 4,  'chensy@hit.edu.cn', 1),
+(16, 'author5',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '刘洋',   3, 5,  'liuyang@jlu.edu.cn', 1),
+(17, 'author6',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '赵雪梅', 3, 6,  'zhaoxm@dlut.edu.cn', 1),
+(18, 'author7',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '周伟',   3, 7,  'zhouwei@ustc.edu.cn', 1),
+(19, 'author8',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '孙丽华', 3, 8,  'sunlh@hit.edu.cn', 1),
+(20, 'author9',  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '吴志强', 3, 9,  'wuzq@fudan.edu.cn', 1),
+(21, 'author10', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '郑晓东', 3, 10, 'zhengxd@zju.edu.cn', 1),
+(22, 'author11', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '黄文博', 3, 11, 'huangwb@pku.edu.cn', 1),
+(23, 'author12', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '林嘉怡', 3, 12, 'linjy@nju.edu.cn', 1),
+(24, 'author13', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '杨建华', 3, 13, 'yangjh@whu.edu.cn', 1),
+(25, 'author14', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '何晓峰', 3, 14, 'hexf@mail.sysu.edu.cn', 1),
+(26, 'author15', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', '唐丽娟', 3, 15, 'tanglij@scu.edu.cn', 1);
+
+-- -----------------------------------------------------------
+-- 10. 插入用户角色关联数据
+-- -----------------------------------------------------------
+INSERT INTO sys_user_role (user_id, role_id) VALUES
+(1, 1),
+(2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (9, 2), (10, 2), (11, 2),
+(12, 3), (13, 3), (14, 3), (15, 3), (16, 3), (17, 3), (18, 3), (19, 3), (20, 3), (21, 3),
+(22, 3), (23, 3), (24, 3), (25, 3), (26, 3);

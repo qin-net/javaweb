@@ -17,6 +17,16 @@
         <url-pattern>/api/*</url-pattern>
     </filter-mapping>
 
+    <!-- Auth Filter -->
+    <filter>
+        <filter-name>AuthFilter</filter-name>
+        <filter-class>com.journal.web.AuthFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>AuthFilter</filter-name>
+        <url-pattern>/api/*</url-pattern>
+    </filter-mapping>
+
     <!-- Encoding Filter -->
     <filter>
         <filter-name>EncodingFilter</filter-name>
@@ -28,6 +38,15 @@
     </filter-mapping>
 
     <!-- Servlet 映射 -->
+    <servlet>
+        <servlet-name>AuthServlet</servlet-name>
+        <servlet-class>com.journal.web.AuthServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AuthServlet</servlet-name>
+        <url-pattern>/api/auth/*</url-pattern>
+    </servlet-mapping>
+
     <servlet>
         <servlet-name>DashboardServlet</servlet-name>
         <servlet-class>com.journal.web.DashboardServlet</servlet-class>
