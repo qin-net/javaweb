@@ -28,13 +28,30 @@ export default function Login() {
     }
 
     setLoading(true);
+    toast.info(`[调试] 开始登录请求: ${username.trim()}`);
     try {
-      await login(username.trim(), password);
-      toast.success('登录成功');
-      navigate('/');
+      const loggedInUser = await login(username.trim(), password);
+      toast.info(`[调试] 登录API返回: ${JSON.stringify({ id: loggedInUser?.id, roleCode: loggedInUser?.roleCode, refId: loggedInUser?.refId, realName: loggedInUser?.realName })}`);
+
+      if (!loggedInUser) {
+        toast.error('[调试] login() 返回了空值，无法判断角色');
+        return;
+      }
+
+      // 根据角色跳转到对应的首页
+      const roleCode = loggedInUser.roleCode;
+      let dest = '/';
+      if (roleCode === 'reviewer') {
+        dest = '/review-management';
+      } else if (roleCode === 'author') {
+        dest = '/papers/submit';
+      }
+      toast.success(`登录成功，角色: ${loggedInUser.roleName}，跳转至: ${dest}`);
+      navigate(dest);
     } catch (err) {
       const message = err instanceof Error ? err.message : '登录失败，请稍后重试';
-      toast.error(message);
+      toast.error(`[调试] 登录异常: ${message}`);
+      console.error('[Login] 登录异常详情:', err);
     } finally {
       setLoading(false);
     }

@@ -13,10 +13,20 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const requestUrl = error.config?.url || '';
+    const httpStatus = error.response?.status;
     const responseData = error.response?.data;
     const isAuthCheck = requestUrl.includes('/api/auth/me');
+
+    console.warn(`[API拦截器] 请求失败: ${error.config?.method?.toUpperCase()} ${requestUrl}`, {
+      httpStatus,
+      responseCode: responseData?.code,
+      message: responseData?.message || error.message,
+    });
+
     if (!isAuthCheck && responseData && responseData.code === 401) {
+      console.warn('[API拦截器] 收到401，当前页面:', window.location.pathname);
       if (!window.location.pathname.startsWith('/login')) {
+        console.warn('[API拦截器] 非登录页，执行硬跳转到 /login');
         window.location.href = '/login';
       }
     }

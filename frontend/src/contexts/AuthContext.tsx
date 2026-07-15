@@ -6,7 +6,7 @@ interface AuthContextType {
   user: AuthUser | null;
   menus: MenuItem[];
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
 }
 
@@ -23,26 +23,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function checkAuth() {
       setLoading(true);
+      console.log('[AuthContext] 开始检查登录状态...');
       try {
         const currentUser = await getCurrentUser();
         if (cancelled) return;
 
         if (currentUser) {
+          console.log('[AuthContext] 已登录用户:', { id: currentUser.id, roleCode: currentUser.roleCode, realName: currentUser.realName });
           setUser(currentUser);
           const userMenus = await getUserMenus();
           if (cancelled) return;
+          console.log('[AuthContext] 获取菜单成功:', userMenus.map(m => m.menuName));
           setMenus(userMenus);
         } else {
+          console.log('[AuthContext] 未登录，getCurrentUser 返回 null');
           setUser(null);
           setMenus([]);
         }
-      } catch {
+      } catch (err) {
+        console.warn('[AuthContext] 检查登录状态异常:', err);
         if (!cancelled) {
           setUser(null);
           setMenus([]);
         }
       } finally {
         if (!cancelled) {
+          console.log('[AuthContext] 检查完成，loading -> false');
           setLoading(false);
         }
       }
@@ -54,18 +60,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string): Promise<AuthUser> => {
+    console.log('[AuthContext] 调用 apiLogin...');
     const loggedInUser = await apiLogin(username, password);
+    console.log('[AuthContext] apiLogin 成功:', { id: loggedInUser.id, roleCode: loggedInUser.roleCode, realName: loggedInUser.realName });
     setUser(loggedInUser);
     const userMenus = await getUserMenus();
+    console.log('[AuthContext] 菜单加载成功:', userMenus.map(m => m.menuName));
     setMenus(userMenus);
+    return loggedInUser;
   };
 
   const logout = async () => {
+    console.log('[AuthContext] 执行登出...');
     try {
       await apiLogout();
-    } catch {
-      // ignore errors on logout
+      console.log('[AuthContext] 登出API调用成功');
+    } catch (err) {
+      console.warn('[AuthContext] 登出API异常(已忽略):', err);
     }
     setUser(null);
     setMenus([]);

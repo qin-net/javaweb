@@ -23,29 +23,57 @@ function ProtectedLayout() {
   const location = useLocation()
 
   if (loading) {
+    console.log('[ProtectedLayout] loading 中，显示加载动画，当前路径:', location.pathname)
     return <LoadingSkeleton fullScreen />
   }
 
   if (!user) {
+    console.log('[ProtectedLayout] 未登录，重定向到 /login，来源路径:', location.pathname)
     return <Navigate to="/login" replace state={{ from: location }} />
   }
 
+  console.log('[ProtectedLayout] 已登录，渲染 Layout，用户:', user.realName, '角色:', user.roleCode, '当前路径:', location.pathname)
   return <Layout />
 }
 
-/** Login page: if already logged in, redirect to home */
+/** Login page: if already logged in, redirect to role-specific home */
 function LoginRoute() {
   const { user, loading } = useAuth()
 
   if (loading) {
+    console.log('[LoginRoute] loading 中，显示加载动画')
     return <LoadingSkeleton fullScreen />
   }
 
   if (user) {
-    return <Navigate to="/" replace />
+    const dest = user.roleCode === 'reviewer'
+      ? '/review-management'
+      : user.roleCode === 'author'
+        ? '/papers/submit'
+        : '/'
+    console.log('[LoginRoute] 已登录，重定向到:', dest, '角色:', user.roleCode)
+    return <Navigate to={dest} replace />
   }
 
+  console.log('[LoginRoute] 未登录，显示登录页')
   return <Login />
+}
+
+/** Catch-all: redirect to role-specific home or login */
+function CatchAllRedirect() {
+  const { user } = useAuth()
+  const location = useLocation()
+  if (!user) {
+    console.log('[CatchAllRedirect] 未登录，重定向到 /login，来源:', location.pathname)
+    return <Navigate to="/login" replace />
+  }
+  const dest = user.roleCode === 'reviewer'
+    ? '/review-management'
+    : user.roleCode === 'author'
+      ? '/papers/submit'
+      : '/'
+  console.log('[CatchAllRedirect] 未匹配路由:', location.pathname, '→ 重定向到:', dest)
+  return <Navigate to={dest} replace />
 }
 
 function App() {
@@ -71,7 +99,7 @@ function App() {
         </Route>
 
         {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<CatchAllRedirect />} />
       </Routes>
     </Suspense>
   )
