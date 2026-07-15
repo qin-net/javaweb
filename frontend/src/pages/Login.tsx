@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { BookOpen, User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -11,7 +10,6 @@ const TEST_ACCOUNTS = [
 ];
 
 export default function Login() {
-  const navigate = useNavigate();
   const { login } = useAuth();
 
   const [username, setUsername] = useState('');
@@ -38,16 +36,10 @@ export default function Login() {
         return;
       }
 
-      // 根据角色跳转到对应的首页
-      const roleCode = loggedInUser.roleCode;
-      let dest = '/';
-      if (roleCode === 'reviewer') {
-        dest = '/review-management';
-      } else if (roleCode === 'author') {
-        dest = '/papers/submit';
-      }
-      toast.success(`登录成功，角色: ${loggedInUser.roleName}，跳转至: ${dest}`);
-      navigate(dest);
+      toast.success(`登录成功，角色: ${loggedInUser.roleName}，等待自动跳转...`);
+      console.log('[Login] 登录成功，不主动navigate，由LoginRoute检测user变化后自动重定向');
+      // 不在这里 navigate！
+      // LoginRoute 组件会在检测到 user 不为 null 时自动重定向到角色对应首页
     } catch (err) {
       const message = err instanceof Error ? err.message : '登录失败，请稍后重试';
       toast.error(`[调试] 登录异常: ${message}`);
